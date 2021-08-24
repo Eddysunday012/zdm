@@ -92,7 +92,7 @@ C=4.19
 pset=[np.log10(float(Emin)),np.log10(float(Emax)),alpha,gamma,sfr_n,logmean,logsigma,C,setH0]
 it.print_pset(pset)
 
-grids=misc_functions.initialise_grids(surveys,zDMgrid, zvals,dmvals,pset,wdist=False,source_evolution=0,alpha_method=0)
+grids=misc_functions.initialise_grids(surveys,zDMgrid, zvals,dmvals,pset,wdist=True,source_evolution=0,alpha_method=0)
 
 #set to True to scan H0 likelihoods
 plots=False
@@ -143,7 +143,7 @@ if scanoverH0:
         #for H0
         t0=time.process_time()
         
-        H0iter=np.linspace(50,130,4)
+        H0iter=np.linspace(40,120,8)
         lscanH0,lllistH0,expectedH0=it.scan_likelihoods_1D(grid,pset,sv,8,H0iter,norm=True)
         misc_functions.plot_1d(H0iter,lscanH0,'$H_{\\rm 0}$','Plots/test_lik_fn_emax.pdf')
         t1=time.process_time()
@@ -179,7 +179,7 @@ def scan_H0(H0_start,H0_stop,n_iterations,surveys,plots=True):
         pset=[np.log10(float(Emin)),np.log10(float(Emax)),alpha,gamma,sfr_n,logmean,logsigma,C,setH0]
         it.print_pset(pset)
         
-        grids=misc_functions.initialise_grids(surveys,zDMgrid, zvals,dmvals,pset,wdist=False,source_evolution=0,alpha_method=0)
+        grids=misc_functions.initialise_grids(surveys,zDMgrid, zvals,dmvals,pset,wdist=True,source_evolution=0,alpha_method=0)
         
         likessurvey=[]
         for j in range (len(surveys)):
@@ -224,4 +224,4 @@ def scan_H0(H0_start,H0_stop,n_iterations,surveys,plots=True):
         plt.show()
         plt.close()
     
-scan_H0(50,130,4,surveys,plots=True)
+scan_H0(40,120,8,surveys,plots=True)

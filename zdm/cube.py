@@ -60,7 +60,7 @@ def main(Cube):
 	
 	#parser.add_argument(", help
 	# get the grid of p(DM|z)
-	zDMgrid, zvals,dmvals=get_zdm_grid(new=False,plot=False,method='analytic')
+	zDMgrid, zvals,dmvals, H0=get_zdm_grid(new=False,plot=False,method='analytic')
 	# NOTE: if this is new, we also need new surveys and grids!
 	
 	############## Initialise surveys ##############
@@ -74,7 +74,7 @@ def main(Cube):
 	Wlogsigma=0.899148
 	DMhalo=50
 	
-	NewSurveys=False
+	NewSurveys=True
 	
 	prefix='Cube'
 	Wbins=5
@@ -133,11 +133,11 @@ def main(Cube):
 	lmean=np.log10(50)
 	lsigma=0.5
 	C=0.
-	pset=[lEmin,lEmax,alpha,gamma,sfr_n,lmean,lsigma,C]
+	pset=[lEmin,lEmax,alpha,gamma,sfr_n,lmean,lsigma,C,H0]
 	
 	# generates zdm grids for initial parameter set
 	# when submitting a job, make sure this is all pre-generated once
-	NewGrids=False
+	NewGrids=True
 	if NewGrids:
 		grids=initialise_grids(surveys,zDMgrid, zvals,dmvals,pset,wdist=True)
 		with open('Pickle/'+prefix+'grids.pkl', 'wb') as output:
