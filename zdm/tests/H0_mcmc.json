@@ -1,0 +1,22 @@
+{
+    "state": {
+        "FRBdemo": {
+            "alpha_method": 1
+        },
+        "cosmo": {
+            "fix_Omega_b_h2": true
+        }
+    },
+    "lEmax": {
+        "DC": "energy",
+        "lower": 40.4, 
+        "upper": 43.4, 
+        "prior": "uniform"
+    },
+    "H0": {
+        "DC": "cosmo",
+        "lower": 60.0, 
+        "upper": 80.0, 
+        "prior": "uniform"
+    }
+}
