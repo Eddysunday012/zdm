@@ -115,11 +115,11 @@ def run_gamma():
 
         # Misses
         norm = float(mpmath.gammainc(gamma+1, a=Eth/Emax))
-        misses_term =  -C * norm
+        misses_term =  -(C/Emax) * norm
 
         # Hits
         NFRB = len(Eval)
-        fterm = NFRB * np.log(C/Emax)
+        fterm = NFRB * (np.log(C) - 2*np.log(Emax))
         sterm= np.sum(np.log((Eval/Emax)**(gamma) * np.exp(-Eval/Emax)))
         hits_term = fterm + sterm
 
@@ -136,22 +136,9 @@ def run_gamma():
         return lC, gamma, lEmax
 
 
-    '''
-    lEmax = np.linspace(40.1, 45., 100)
-    LLs = []
-    for ilEmax in lEmax:
-        LLs.append(loglike_powerlaw((42., -2., ilEmax)))
-
-    plt.clf()
-    ax = plt.gca()
-    ax.plot(lEmax, LLs)
-    plt.show()
-
-    embed(header='59 of test_nested')
-    '''
-
-    dsampler = dynesty.DynamicNestedSampler(loglike_powerlaw, 
-                                            prior_transform_powerlaw, 
+    # dyensty
+    dsampler = dynesty.DynamicNestedSampler(loglike_gamma, 
+                                            prior_transform_gamma, 
                                             ndim=3,
                                             bound='single', 
                                             sample='rwalk')
@@ -167,14 +154,14 @@ def run_gamma():
     fig, axes = dyplot.traceplot(dsampler.results, truths=truths, labels=labels,
                                 fig=plt.subplots(3, 2, figsize=(16, 12)))
     fig.tight_layout()
-    plt.savefig('power_law_traces.png')
+    plt.savefig('gamma_traces.png')
     print("Wrote traces figure to disk ")
 
     # Corner
     fig, axes = dyplot.cornerplot(dres, truths=truths, show_titles=True, 
                                 title_kwargs={'y': 1.04}, labels=labels,
                                 fig=plt.subplots(3, 3, figsize=(15, 15)))
-    plt.savefig('power_law_corner.png')
+    plt.savefig('gamma_corner.png')
     print("Wrote corner figure to disk ")
 
     print(f"max Eval = {np.max(Eval)}")
@@ -183,4 +170,5 @@ def run_gamma():
 
 
 # Run
-run_powerlaw()
+#run_powerlaw()
+run_gamma()
