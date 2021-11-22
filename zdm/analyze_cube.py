@@ -1,6 +1,8 @@
+""" Codes to analyze cube outputs """
 import os
 import numpy as np
 import pickle
+import glob
 
 import math
 import scipy
@@ -14,8 +16,20 @@ from zdm import iteration
 
 from IPython import embed
 
-def slurp_cube(input_file:str, prefix:str, outfile:str, nfile=10,
-               nsurveys=3):
+def slurp_cube(input_file:str, prefix:str, outfile:str, 
+               nsurveys, debug:bool=False):
+    """ Slurp the cube ASCII output files and write 
+    lC and ll into a numpy savez file
+
+    Args:
+        input_file (str): parameter file used to generate the cube
+        prefix (str): prefix on the output files
+        outfile (str): output file name.  Should have .npz extension
+        nsurveys (int): Number of surveys in the analysis. 
+        debug (int, optional): Debug?
+    """
+    # Grab em.  The order doesn't matter
+    files = glob.glob(prefix+'*.out') 
 
     # Init
     input_dict=io.process_jfile(input_file)
@@ -28,6 +42,7 @@ def slurp_cube(input_file:str, prefix:str, outfile:str, nfile=10,
 
     param_shape = np.array([0]+cube_shape)[iorder].tolist()[:-1]
     ll_cube = np.zeros(param_shape)
+    lC_cube = np.zeros(param_shape)
     ll_cube[:] = -9e9
 
     survey_items = ['lls', 'DM_z', 'N', 'SNR', 'Nex']
@@ -37,8 +52,7 @@ def slurp_cube(input_file:str, prefix:str, outfile:str, nfile=10,
     names += ['ll']
     
     # Loop on cube output files
-    for ss in range(nfile):
-        dfile = prefix+f'_{ss+1}.out'
+    for dfile in files:
         print(f"Loading: {dfile}")
         df = pandas.read_csv(dfile, header=None, delimiter=r"\s+", names=names)
 
@@ -51,14 +65,33 @@ def slurp_cube(input_file:str, prefix:str, outfile:str, nfile=10,
             idx = np.ravel_multi_index(current, ll_cube.shape)
             # Set
             ll_cube.flat[idx] = row.ll
+            lC_cube.flat[idx] = row.lC
+        # Check
+        if debug:
+            embed(header='69 of analyze')
     
     # Write
-    np.save(outfile, ll_cube)
+    np.savez(outfile, ll=ll_cube, lC=lC_cube)
     print(f"Wrote: {outfile}")
 
 
-def get_bayesian_data(lls, plls=None, pklfile=None,load=False,
-                      tag=None,index=None,setzero=None):
+def get_bayesian_data(lls:np.ndarray, 
+                      plls:np.ndarray=None, 
+                      pklfile=None):
+    """ Method to perform simple Bayesian analysis
+    on the Log-likelihood cube
+
+    Args:
+        lls (np.ndarray): Log-likelood cube
+        plls (np.ndarray, optional): Log-likelihood cube corrected for priors (e.g. alpha). Defaults to None.
+        pklfile (str, optional): If given, write
+            the output to this pickle file. Defaults to None.
+
+    Returns:
+        tuple: uvals,vectors,wvectors
+            lists of np.ndarray's of LL analysis
+            One item per parameter in the cube
+    """
     NDIMS= len(lls.shape)
             
     origlls=lls
@@ -126,6 +159,22 @@ def get_bayesian_data(lls, plls=None, pklfile=None,load=False,
 def do_single_plots(uvals,vectors,wvectors,names,tag=None, fig_exten='.png',
                     dolevels=False,log=True,outdir='SingleFigs/',
                     vparams_dict=None, prefix=''):
+    """ Generate a series of 1D plots of the cube parameters
+
+    Args:
+        uvals (np.ndarray): [description]
+        vectors (): [description]
+        wvectors ([type]): [description]
+        names ([type]): [description]
+        tag ([type], optional): [description]. Defaults to None.
+        fig_exten (str, optional): [description]. Defaults to '.png'.
+        dolevels (bool, optional): [description]. Defaults to False.
+        log (bool, optional): [description]. Defaults to True.
+        outdir (str, optional): [description]. Defaults to 'SingleFigs/'.
+        vparams_dict (dict, optional): parameter dict -- used to set x-values. Defaults to None.
+        prefix (str, optional): [description]. Defaults to ''.
+
+    """
     
     if tag is not None:
         outdir=tag+outdir

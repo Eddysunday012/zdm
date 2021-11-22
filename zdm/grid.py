@@ -31,6 +31,7 @@ class Grid:
         """
         self.grid=None
         self.survey = survey
+        self.verbose=False
         # Beam
         self.beam_b=survey.beam_b
         self.beam_o=survey.beam_o
@@ -41,7 +42,7 @@ class Grid:
         self.source_function=cos.choose_source_evolution_function(
             state.FRBdemo.source_evolution)
 
-        self.luminosity_function=0
+        self.luminosity_function = self.state.energy.luminosity_function
         self.init_luminosity_functions()
 
         # Init the grid
@@ -64,11 +65,16 @@ class Grid:
         self.calc_rates() #includes sfr smearing factors and pdv mult
 
     def init_luminosity_functions(self):
-        if self.luminosity_function==0:
+        if self.luminosity_function==0:  # Power-law
             self.array_cum_lf=zdm.array_cum_power_law
             self.vector_cum_lf=zdm.vector_cum_power_law
             self.array_diff_lf=zdm.array_diff_power_law
             self.vector_diff_lf=zdm.vector_diff_power_law
+        elif self.luminosity_function==1:  # Gamma function
+            self.array_cum_lf=zdm.array_cum_gamma
+            self.vector_cum_lf=zdm.vector_cum_gamma
+            self.array_diff_lf=zdm.array_diff_gamma
+            self.vector_diff_lf=zdm.vector_diff_gamma
         else:
             raise ValueError("Luminosity function must be 0, not ",self.luminosity_function)
     
@@ -111,7 +117,8 @@ class Grid:
                 raise ValueError("wrong shape of grid for zvals and dm vals")
         else:
             if shape[1] == self.ndm:
-                print("Grid successfully initialised")
+                if self.verbose:
+                    print("Grid successfully initialised")
             else:
                 raise ValueError("wrong shape of grid for zvals and dm vals")
         
@@ -261,12 +268,24 @@ class Grid:
             #self.sfr_smear_grid=np.multiply(self.smear_grid.T,self.sfr).T
             #self.pdv_sfr=np.multiply(self.pdv.T,self.sfr)
         
-    def calc_thresholds(self, F0, eff_table, bandwidth=1e9, nuObs=1.3e9, nuRef=1.3e9, weights=None):
+    def calc_thresholds(self, F0:float, eff_table, 
+                        bandwidth=1e9, nuObs=1.3e9, 
+                        nuRef=1.3e9, weights=None):
         """ Sets the effective survey threshold on the zdm grid
-        F0: base survey threshold
-        eff_table: table of efficiencies corresponding to DM-values
-        nu0: survey frequency (affects sensitivity via alpha - only for alpha method)
-        nuref: reference frequency we are calculating thresholds at
+
+        Args:
+            F0 (float): base survey threshold
+            eff_table ([type]): table of efficiencies corresponding to DM-values
+            bandwidth ([type], optional): [description]. Defaults to 1e9.
+            nuObs ([float], optional): survey frequency (affects sensitivity via alpha - only for alpha method)
+                Defaults to 1.3e9.
+            nuRef ([float], optional): reference frequency we are calculating thresholds at
+                Defaults to 1.3e9.
+            weights ([type], optional): [description]. Defaults to None.
+
+        Raises:
+            ValueError: [description]
+            ValueError: [description]
         """
         # keep the inputs for later use
         self.F0=F0
@@ -555,7 +574,6 @@ class Grid:
             reset_cos = True
             get_zdm = True
             calc_dV = True
-            smear_mask = True
             smear_dm = True
             calc_thresh = True
             calc_pdv = True
@@ -577,10 +595,10 @@ class Grid:
             new_sfr_smear=True  # True for either alpha_method
         if self.chk_upd_param('alpha', vparams, update=True):
             set_evol = True
-            calc_pdv = True
-            new_pdv_smear=True
             if self.state.FRBdemo.alpha_method == 0:
                 calc_thresh = True
+                calc_pdv = True
+                new_pdv_smear=True
             elif self.state.FRBdemo.alpha_method == 1:
                 new_sfr_smear=True
 
